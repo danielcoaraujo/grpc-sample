@@ -6,6 +6,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +23,8 @@ public class GreetClient {
 
 //        UnaryCall(channel);
 //        serverStreaming(channel);
-        clientStreaming(channel);
+//        clientStreaming(channel);
+        biDirectionStreaming(channel);
 
         System.out.println("Shutting down channel");
         channel.shutdown();
@@ -111,6 +113,50 @@ public class GreetClient {
             latch.await(3L, TimeUnit.SECONDS);
         }catch (InterruptedException ex){
             ex.printStackTrace();
+        }
+    }
+
+
+    private static void biDirectionStreaming(ManagedChannel channel) {
+        GreetServiceGrpc.GreetServiceStub asyncClient = GreetServiceGrpc.newStub(channel);
+        CountDownLatch latch = new CountDownLatch(1);
+
+        StreamObserver<GreetEveryoneRequest> requestStreamObserver = asyncClient.greetEveryone(
+                new StreamObserver<GreetEveryoneResponse>() {
+                    @Override
+                    public void onNext(GreetEveryoneResponse value) {
+                        System.out.println("Something returns from server: " + value.getResult());
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        latch.countDown();
+                    }
+                });
+
+        Arrays.asList("Daniel","Rafael","Michelle","Bruno","Allan","Eduardo").forEach(name -> {
+            System.out.println("Sending to server: " + name);
+            requestStreamObserver.onNext(GreetEveryoneRequest.newBuilder()
+                    .setGretting(Greeting.newBuilder()
+                            .setFirstName(name)
+                            .build())
+                    .build());
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }

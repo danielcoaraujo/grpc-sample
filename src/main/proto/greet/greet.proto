@@ -55,4 +55,7 @@ service GreetService{
 
     //Bidirectional
     rpc GreetEveryone(stream GreetEveryoneRequest) returns (stream GreetEveryoneResponse) {};
+
+    //Will throw an error if the request is not a string.
+    rpc GreetErrorWhenIsEmpty(GreetRequest) returns (GreetResponse) {};
 }

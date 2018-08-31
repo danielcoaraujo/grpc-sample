@@ -1,6 +1,7 @@
 package server;
 
 import com.proto.greet.*;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 public class GreetServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
@@ -85,5 +86,18 @@ public class GreetServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
             }
 
         };
+    }
+
+    @Override
+    public void greetErrorWhenIsEmpty(GreetRequest request, StreamObserver<GreetResponse> responseObserver) {
+        if(request.getGreeting().getFirstName().isEmpty()){
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("The value mustn't be null.")
+                    .asRuntimeException());
+        }else{
+            responseObserver.onNext(GreetResponse.newBuilder()
+                    .setResult("Tudo certo.")
+                    .build());
+        }
     }
 }

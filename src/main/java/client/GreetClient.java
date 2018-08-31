@@ -1,6 +1,7 @@
 package client;
 
 import com.proto.greet.*;
+import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -24,7 +25,8 @@ public class GreetClient {
 //        UnaryCall(channel);
 //        serverStreaming(channel);
 //        clientStreaming(channel);
-        biDirectionStreaming(channel);
+//        biDirectionStreaming(channel);
+        doCallWithError(channel);
 
         System.out.println("Shutting down channel");
         channel.shutdown();
@@ -157,6 +159,22 @@ public class GreetClient {
             latch.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void doCallWithError(Channel channel){
+        GreetServiceGrpc.GreetServiceBlockingStub client = GreetServiceGrpc.newBlockingStub(channel);
+
+        GreetRequest request = GreetRequest.newBuilder()
+                .setGreeting(Greeting.newBuilder()
+                        .setFirstName("")
+                        .build())
+                .build();
+
+        try {
+            client.greetErrorWhenIsEmpty(request);
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
     }
 }
